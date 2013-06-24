@@ -10,7 +10,7 @@ import javax.swing.WindowConstants;
 
 public class Cadre extends JFrame implements ActionListener {
 
-  private final JMenuBar menuBar = new JMenuBar();
+	private final JMenuBar menuBar = new JMenuBar();
 	private final JMenu fichierMenu = new JMenu();
 	private final JMenuItem ouvrirMenu = new JMenuItem();
 	private final PanDessin panneau = new PanDessin();
@@ -97,3 +97,14 @@ public class Cadre extends JFrame implements ActionListener {
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
