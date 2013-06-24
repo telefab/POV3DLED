@@ -19,7 +19,7 @@ import javax.swing.JPanel;
 
 public class PanDessin extends JPanel  {
 
-  BufferedImage monImage = null;
+	BufferedImage monImage = null;
 
 	public PanDessin() {
 		super();
@@ -141,12 +141,13 @@ public class PanDessin extends JPanel  {
 		else if (c==Color.yellow) {return 4;}
 		else if (c==Color.magenta) {return 5;}
 		else if (c==Color.white) {return 6;}
+		else if (c==Color.black) {return 7;}
 		return n;
 	}
 	
 	
 	protected void dessinerTable(){
-		int hauteur =40;
+		int hauteur =39;
 		int largeur =monImage.getWidth()/(monImage.getHeight()/hauteur);
 		BufferedImage image = new BufferedImage(monImage.getWidth(), monImage.getHeight(), BufferedImage.TYPE_INT_RGB);
 		//on cree une matrice de couleurs
@@ -179,13 +180,16 @@ public class PanDessin extends JPanel  {
 	    }
 	    monImage = image;
 	    repaint();
-	    for (int i=0; i<hauteur;i++){
-	    	for (int j=0; j<largeur;j++ ){
+	    ch=ch+"\"";
+    	for (int j=0; j<largeur;j++ ){
+	    	for (int i=0; i<hauteur;i++){
 	    		res[i][j]=correspondanceNombre(tab[i][j]); 
 	    		ch=ch+correspondanceNombre(tab[i][j]);
-	    		ch=ch+",";
+	    		//ch=ch+",";
 	    	}
-	    	ch=ch+";";
+	    	ch=ch+"\"";	    	
+	    	ch=ch+"\r\n";
+	    	ch=ch+"\"";
 	    }
 	    System.out.println(ch);
 	    
