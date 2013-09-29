@@ -4,24 +4,27 @@
  * No synchronization for now: fixed rounds per second
  */
 
-// Number of rounds per second
-const int roundsPerSecond = 30;
-
 // Number of LEDs in the column
-const int nbrLeds = 39;
+#define LEDS 39
 
 // Number of colors per LED
-const int nbrColors = 3;
+#define COLORS 3
 
 // Number of virtual columns in one round
-const int nbrColumns = 77;
+#define COLUMNS 77
+
+// Positive LED pins
+const byte ledPins[] = {A2,A3,A4,A5,A6,A7,A8,A9,A10,52,53,50,51,48,49,46,47,44,45,42,43,40,41,38,39,36,37,34,35,32,33,30,31,28,29,26,27,24,25};
+
+// Negative color LED pins
+const byte colorPins[] = {23,22,A0};
 
 // Image data LED by LED
 // Colors: bit mask
 // red => 1
 // green => 2
 // blue => 4
-PROGMEM const unsigned char imageData[nbrColumns][nbrLeds]  = {
+PROGMEM const byte imageData[COLUMNS][LEDS]  = {
 	{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -100,68 +103,80 @@ PROGMEM const unsigned char imageData[nbrColumns][nbrLeds]  = {
 	{0,0,0,0,0,0,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
-// Positive LED pins
-const unsigned char ledPins[] = {A2,A3,A4,A5,A6,A7,A8,A9,A10,52,53,50,51,48,49,46,47,44,45,42,43,40,41,38,39,36,37,34,35,32,33,30,31,28,29,26,27,24,25};
 
-// Negative color LED pins
-const unsigned char colorPins[] = {23,22,A0};
+// Dynamic image data for non-static images
+byte dynamicData[COLUMNS][LEDS];
+
+// Number of rounds per second
+const int roundsPerSecond = 30;
 
 // Delay to display one color of one column (microseconds)
-unsigned int colorDelay = 1000000 / (roundsPerSecond * nbrColumns * nbrColors);
+unsigned int colorDelay = 1000000 / (roundsPerSecond * COLUMNS * COLORS);
 
 // Currently displayed column
-int currentColumn = nbrColumns-1;
+int currentColumn = COLUMNS-1;
 
 // Currently displayed color
-int currentColor = nbrColors-1;
+int currentColor = COLORS-1;
 
 // Date (microseconds) of the last LED refresh
 unsigned long lastRefresh = 0;
 
-// Display given data on the LED column, for the given color
-void displayColumnColor(const unsigned char columnData[], int color) {
+// Display given data column on the LEDs, for the given color
+// Warning: to protect LEDS, they should never be on too long!
+// The voltage is higher than the static limit!
+void displayColumnColor(const byte data[COLUMNS][LEDS], int column, int color) {
 	int i;
 	// Switch the previous color off
 	digitalWrite(colorPins[currentColor], HIGH);
 	// Switch the proper LEDs on
-	for (i = 0; i < nbrLeds; i++)
-		digitalWrite(ledPins[i], columnData[i] & (1 << color));
+	for (i = 0; i < LEDS; i++)
+		digitalWrite(ledPins[i], data[column][i] & (1 << color));
 	// Switch the proper color on
 	digitalWrite(colorPins[currentColor], LOW);
-	// Log displayed color
+	// Log current display
 	currentColor = color;
+	currentColumn = column;
+	lastRefresh = micros();
 }
 
-// Full column with an unique color
-void displayColor(int color) {
-	unsigned char data[nbrLeds];
-	int i;
-	// Data with all LEDs on
-	for (i = 0; i < nbrLeds; i++)
-		data[i] = 255;
-	displayColumnColor(data, color);
-}
-
-// Refresh the column display based on the current state and image data
+// Refresh the column display based on the current state and on data
 // Only if the delay since the last refresh is enough
-void refreshImage() {
+void refreshImage(const byte data[COLUMNS][LEDS]) {
 	unsigned long delay = micros() - lastRefresh;
 	if (delay >= lastRefresh) {
 		// Cycle through colors and columns
 		int newColor = currentColor + 1;
 		int newColumn = currentColumn;
-		if (newColor >= nbrColors) {
+		if (newColor >= COLORS) {
 			currentColor = 0;
 			newColumn++;
-			if (newColumn >= nbrColumns)
+			if (newColumn >= COLUMNS)
 				newColumn = 0;
 		}
 		// Display
-		displayColumnColor(imageData[newColumn], newColor);
-		// Log the column and time
-		currentColumn = newColumn;
-		lastRefresh = micros();
+		displayColumnColor(data, newColumn, newColor);
 	}
+}
+
+// Simple blocking version of refreshImage
+void iterateImage(const byte data[COLUMNS][LEDS]) {
+	refreshImage(data);
+	delayMicroseconds(colorDelay);
+}
+
+// Full display with an unique color during 3 seconds
+// Color is a color code, not an index
+void displayColor(byte color) {
+	unsigned long endTime = millis() + 3000;
+	// Data with all LEDs on
+	int i, j;
+	for (i = 0; i < COLUMNS; i++)
+		for (j = 0; j < LEDS; j++)
+			dynamicData[i][j] = color;
+	// Blocking display
+	while (millis() < endTime)
+		iterateImage(dynamicData);
 }
 
 // Initialization method
@@ -170,20 +185,18 @@ void setup() {
 	Serial.begin(9600);
 	// LED pins initialization
 	int i;
-	for (i = 0; i < nbrLeds; i++)
+	for (i = 0; i < LEDS; i++)
 		pinMode(ledPins[i], OUTPUT);
-	for (i = 0; i < nbrColors; i++)
+	for (i = 0; i < COLORS; i++)
 		pinMode(colorPins[i], OUTPUT);
 	// Test sequence (to check LEDs)
 	delay(1000);
-	for (i = 0; i < nbrColors; i++) {
-		displayColor(i);
-		delay(3000);
+	for (i = 0; i < COLORS; i++) {
+		displayColor(1 << i);
 	}
 }
 
 // Main method looping forever
 void loop() {
-	refreshImage();
-	delayMicroseconds(colorDelay);
+	iterateImage(imageData);
 }
