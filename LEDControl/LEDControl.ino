@@ -22,10 +22,6 @@ const byte ledPins[] = {A2,A3,A4,A5,A6,A7,A8,A9,A10,52,53,50,51,48,49,46,47,44,4
 // Negative color LED pins (red, green, blue)
 const byte colorPins[] = {22,A0,23};
 
-unsigned long logs[200];
-int logId = 0;
-
-
 // Image data LED by LED
 // Colors: bit mask
 // red => 1
@@ -113,88 +109,55 @@ const byte imageData[COLUMNS][LEDS] = {
 // Dynamic image data for non-static images
 byte dynamicData[COLUMNS][LEDS];
 
-// Number of shades (color combinations except black)
-const int shades = (1 << COLORS) - 1;
-
 // Delay to display one color of one column (microseconds)
-unsigned long shadeDelay = 1000000 / (roundsPerSecond * COLUMNS * shades);
+unsigned long ledDelay = 1000000 / (roundsPerSecond * COLUMNS * LEDS);
 
 // Currently displayed column
 int currentColumn = COLUMNS-1;
 
 // Currently displayed shade
-int currentShade = shades-1;
-
-// Shade for which to start
-// for each column, start at previously last shade
-// to avoid LED changes
-int currentShadeStart = 1;
+int currentLed = LEDS-1;
 
 // Date (microseconds) of the last LED refresh
 unsigned long lastRefresh = 0;
 
-// Current LED pins states
-bool currentLedStates[LEDS];
-
-// Current color pins states
-bool currentColorStates[COLORS];
-
-// Write to a PIN only if the current state is different
-// from the last to save time.
-// Changes the state accordingly.
-void digitalWriteDiff(byte pin, bool *lastState, bool newState) {
-    if (*lastState != newState) {
-        digitalWrite(pin, newState);
-        *lastState = newState;
-    }
-}
-
 // Display given data column on the LEDs, for the given color
 // Warning: to protect LEDS, they should never be on too long!
 // The voltage is higher than the static limit!
-void displayColumnShade(const byte data[COLUMNS][LEDS], int column, int shade) {
+void displayColumnLed(const byte data[COLUMNS][LEDS], int column, int led) {
     int i;
-    // Switch the previous shade off if different
-    if (currentShade != shade) {
-        for (i = 0; i < COLORS; i++)
-            digitalWriteDiff(colorPins[i], &currentColorStates[i], HIGH);
-    }
-    // Switch the LEDs with the right shade on
-    for (i = 0; i < LEDS; i++) {
-        digitalWriteDiff(ledPins[i], &currentLedStates[i], data[column][i] == shade ? HIGH : LOW);
-    }
-    // Switch the proper shade on
-    for (i = 0; i < COLORS; i++)
-        digitalWriteDiff(colorPins[i], &currentColorStates[i], (shade & (1 << i)) == 0 ? HIGH : LOW);
-    // Remember current display
-    currentShade = shade;
-    currentColumn = column;
+    // Switch the previous led off
+    digitalWrite(ledPins[currentLed], LOW);
     lastRefresh = micros();
+    // Select the right colors
+    for (i = 0; i < COLORS; i++) {
+        digitalWrite(colorPins[i], (data[column][led] & (1 << i)) == 0 ? HIGH : LOW);
+    }
+    // Switch the proper led on
+    digitalWrite(ledPins[led], HIGH);
+    // Remember current display
+    currentLed = led;
+    currentColumn = column;
 }
 
 // Refresh the column display based on the current state and on data
 // Only if the delay since the last refresh is enough
 boolean refreshImage(const byte data[COLUMNS][LEDS]) {
-    unsigned long now = micros();
-    unsigned long delay = now - lastRefresh;
-    if (delay >= shadeDelay) {
+    unsigned long delay = micros() - lastRefresh;
+    if (delay >= ledDelay) {
         // Cycle through colors and columns
         // Repeating the color cycle for each column
-        int newShade = currentShade + 1;
-        if (newShade > shades)
-            newShade = 1;
+        int newLed = currentLed + 1;
         int newColumn = currentColumn; 
-        if (newShade == currentShadeStart)
+        if (newLed > LEDS)
         {
-            // Start from the last displayed shade to avoid a change
-            newShade = currentShade;
-            currentShadeStart = currentShade;
+            newLed = 0;
             newColumn++;
             if (newColumn >= COLUMNS)
                 newColumn = 0;
         }
         // Display
-        displayColumnShade(data, newColumn, newShade);
+        displayColumnLed(data, newColumn, newLed);
         return true;
     }
     return false;
@@ -226,16 +189,14 @@ void setup() {
     int i;
     for (i = 0; i < LEDS; i++) {
         pinMode(ledPins[i], OUTPUT);
-        currentLedStates[i] = LOW;
     }
     for (i = 0; i < COLORS; i++) {
         pinMode(colorPins[i], OUTPUT);
-        currentColorStates[i] = LOW;
     }
     // Test sequence (to check LEDs)
     delay(1000);
-    Serial.print("Shade delay: ");
-    Serial.println(shadeDelay);
+    Serial.print("LED delay: ");
+    Serial.println(ledDelay);
     Serial.println("Test sequence");
     for (i = 0; i < COLORS; i++) {
         Serial.print("Color ");
