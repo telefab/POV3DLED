@@ -1,7 +1,7 @@
 /**
  * LED controller
  * Displays a fixed image on the sphere.
- * No synchronization for now: fixed rounds per second.
+ * synchronization coded but disabled for now: fixed rounds per second.
  */
 
 // Number of LEDs in the column
@@ -12,9 +12,6 @@
 
 // Number of virtual columns in one round
 #define COLUMNS 77
-
-// Number of rounds per second
-const int roundsPerSecond = 30;
 
 // Positive LED pins
 const byte ledPins[] = {A2,A3,A4,A5,A6,A7,A8,A9,A10,52,53,50,51,48,49,46,47,44,45,42,43,40,41,38,39,36,37,34,35,32,33,30,31,28,29,26,27,24,25};
@@ -110,7 +107,7 @@ const byte imageData[COLUMNS][LEDS] = {
 byte dynamicData[COLUMNS][LEDS];
 
 // Delay to display one color of one column (microseconds)
-unsigned long ledDelay = 1000000 / (roundsPerSecond * COLUMNS * LEDS);
+unsigned long ledDelay = 50;
 
 // Currently displayed column
 int currentColumn = COLUMNS-1;
@@ -121,6 +118,12 @@ int currentLed = LEDS-1;
 // Date (microseconds) of the last LED refresh
 unsigned long lastRefresh = 0;
 
+// Date (microseconds) of the last round start (photoresistor)
+unsigned long lastRoundStart = 0;
+
+// Is the display paused due to too slow cycles?
+bool paused = false;
+
 // Display given data column on the LEDs, for the given color
 // Warning: to protect LEDS, they should never be on too long!
 // The voltage is higher than the static limit!
@@ -128,7 +131,6 @@ void displayColumnLed(const byte data[COLUMNS][LEDS], int column, int led) {
     int i;
     // Switch the previous led off
     digitalWrite(ledPins[currentLed], LOW);
-    lastRefresh = micros();
     // Select the right colors
     for (i = 0; i < COLORS; i++) {
         digitalWrite(colorPins[i], (data[column][led] & (1 << i)) == 0 ? HIGH : LOW);
@@ -143,8 +145,12 @@ void displayColumnLed(const byte data[COLUMNS][LEDS], int column, int led) {
 // Refresh the column display based on the current state and on data
 // Only if the delay since the last refresh is enough
 boolean refreshImage(const byte data[COLUMNS][LEDS]) {
-    unsigned long delay = micros() - lastRefresh;
-    if (delay >= ledDelay) {
+    unsigned long curDelay = micros() - lastRefresh;
+    // The 3 is to compensate the inaccuracy (mean is ok)
+    if (curDelay + 3 >= ledDelay) {
+        // Start a new delay
+        lastRefresh = micros();
+        paused = false;
         // Cycle through colors and columns
         // Repeating the color cycle for each column
         int newLed = currentLed + 1;
@@ -168,9 +174,9 @@ void iterateImage(const byte data[COLUMNS][LEDS]) {
     while (!refreshImage(data));
 }
 
-// Full display with an unique shade during 3 seconds
+// Full display with an unique shade during 1 second
 void displayShade(byte shade) {
-    unsigned long endTime = millis() + 3000;
+    unsigned long endTime = millis() + 1000;
     // Data with all LEDs on
     int i, j;
     for (i = 0; i < COLUMNS; i++)
@@ -193,8 +199,12 @@ void setup() {
     for (i = 0; i < COLORS; i++) {
         pinMode(colorPins[i], OUTPUT);
     }
+    // Set the LED sensor interrupt on pin 2
+    // Internal pull-up resistor used instead of external
+    pinMode(2, INPUT_PULLUP);
+    attachInterrupt(0, startRound, FALLING);
     // Test sequence (to check LEDs)
-    delay(1000);
+    delay(100);
     Serial.print("LED delay: ");
     Serial.println(ledDelay);
     Serial.println("Test sequence");
@@ -208,5 +218,31 @@ void setup() {
 
 // Main method looping forever
 void loop() {
+//    // Check regularly if a LED was on too long
+//    delay(5);
+//    unsigned long curDelay = micros() - lastRefresh;
+//    // Pause the display if necessary
+//    if (!paused && curDelay >= 1000) {
+//        digitalWrite(ledPins[currentLed], LOW);
+//        paused = true;
+//    }
+    // Synchronization coded but disabled for now
     iterateImage(imageData);
+}
+
+// Called by the light sensor interrupt
+void startRound() {
+    // Log the round start and delay
+    unsigned long curStart = micros();
+    if (lastRoundStart != 0 && !paused) {
+        unsigned long roundDelay = curStart - lastRoundStart;
+        ledDelay = roundDelay / (COLUMNS * LEDS);
+    }
+    lastRoundStart = curStart;
+    // Display one full round, stop if a new round is detected
+    int col = 0;
+    while (col < COLUMNS && curStart == lastRoundStart) {
+        iterateImage(imageData);
+        col++;
+    }
 }
