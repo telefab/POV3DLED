@@ -121,8 +121,12 @@ unsigned long lastRefresh = 0;
 // Date (microseconds) of the last round start (photoresistor)
 unsigned long lastRoundStart = 0;
 
+// Date (microseconds) of the current r
+unsigned long curStart = 0;
+
 // Is the display paused due to too slow cycles?
 bool paused = false;
+int lastState = LOW;
 
 // Display given data column on the LEDs, for the given color
 // Warning: to protect LEDS, they should never be on too long!
@@ -147,7 +151,7 @@ void displayColumnLed(const byte data[COLUMNS][LEDS], int column, int led) {
 boolean refreshImage(const byte data[COLUMNS][LEDS]) {
     unsigned long curDelay = micros() - lastRefresh;
     // The 3 is to compensate the inaccuracy (mean is ok)
-    if (curDelay + 3 >= ledDelay) {
+    if (curDelay >= ledDelay) {
         // Start a new delay
         lastRefresh = micros();
         paused = false;
@@ -190,7 +194,7 @@ void displayShade(byte shade) {
 // Initialization method
 void setup() {
     // Serial debug initialization
-    Serial.begin(9600);
+    //Serial.begin(9600);
     // LED pins initialization
     int i;
     for (i = 0; i < LEDS; i++) {
@@ -202,47 +206,71 @@ void setup() {
     // Set the LED sensor interrupt on pin 2
     // Internal pull-up resistor used instead of external
     pinMode(2, INPUT_PULLUP);
-    attachInterrupt(0, startRound, FALLING);
+    //attachInterrupt(0, startRound, FALLING);
     // Test sequence (to check LEDs)
     delay(100);
-    Serial.print("LED delay: ");
+    /*Serial.print("LED delay: ");
     Serial.println(ledDelay);
-    Serial.println("Test sequence");
+    Serial.println("Test sequence");*/
     for (i = 0; i < COLORS; i++) {
-        Serial.print("Color ");
-        Serial.println(i);
+      /*  Serial.print("Color /");
+        Serial.println(i);*/
         displayShade(1 << i);
     }
-    Serial.println("End test sequence");
+    //Serial.println("End test sequence");
+}
+
+boolean isNewRound()
+{
+    int currentState = digitalRead(2);
+    boolean newRound = (currentState == HIGH && lastState == LOW) ? true : false;
+    lastState = currentState;
+    return newRound;
+   
 }
 
 // Main method looping forever
 void loop() {
-//    // Check regularly if a LED was on too long
-//    delay(5);
-//    unsigned long curDelay = micros() - lastRefresh;
-//    // Pause the display if necessary
-//    if (!paused && curDelay >= 1000) {
-//        digitalWrite(ledPins[currentLed], LOW);
-//        paused = true;
-//    }
+    // Check regularly if a LED was on too long
+   // delay(5);
+     // Log the round start and delay
+  if(isNewRound())
+  {
+    startRound();
+  }
+  /*  unsigned long curDelay = micros() - lastRefresh;
+    // Pause the display if necessary
+    if (!paused && curDelay >= 1000) {
+        digitalWrite(ledPins[currentLed], LOW);
+        paused = true;
+  }
     // Synchronization coded but disabled for now
-    iterateImage(imageData);
+   // iterateImage(imageData);*/
 }
 
 // Called by the light sensor interrupt
 void startRound() {
-    // Log the round start and delay
-    unsigned long curStart = micros();
-    if (lastRoundStart != 0 && !paused) {
+   currentColumn = COLUMNS-1;
+
+// Currently displayed shade
+ currentLed = LEDS-1;
+ unsigned long curStart = micros();
+     //Serial.println("interuption!");
+     if(lastRoundStart != 0) {
         unsigned long roundDelay = curStart - lastRoundStart;
         ledDelay = roundDelay / (COLUMNS * LEDS);
-    }
+        ledDelay -= 30;
+      }
     lastRoundStart = curStart;
     // Display one full round, stop if a new round is detected
-    int col = 0;
-    while (col < COLUMNS && curStart == lastRoundStart) {
+    int numberOfLed = 0;
+   while (numberOfLed < COLUMNS*LEDS) {
         iterateImage(imageData);
-        col++;
-    }
+       numberOfLed++;
+        if(isNewRound())
+      {
+        startRound();
+        return;
+      }
+   }
 }
