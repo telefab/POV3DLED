@@ -109,7 +109,7 @@ byte dynamicData[COLUMNS][LEDS];
 // Delay to display one color of one column (microseconds)
 unsigned long ledDelay = 50;
 
-// Currently displayed column
+// Currently displayed colum  n
 int currentColumn = COLUMNS-1;
 
 // Currently displayed shade
@@ -259,7 +259,6 @@ void startRound() {
      if(lastRoundStart != 0) {
         unsigned long roundDelay = curStart - lastRoundStart;
         ledDelay = roundDelay / (COLUMNS * LEDS);
-        ledDelay -= 30;
       }
     lastRoundStart = curStart;
     // Display one full round, stop if a new round is detected
@@ -274,3 +273,4 @@ void startRound() {
       }
    }
 }
+
