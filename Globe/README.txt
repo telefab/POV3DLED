@@ -1,0 +1,1 @@
+This is a library to control a LED globe using low-level functions.
