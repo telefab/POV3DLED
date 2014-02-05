@@ -30,7 +30,7 @@ void Globe::setup() {
 	// Reset the globe buffer to all black
 	for (i = 0; i < GLOBE_COLUMNS; i++)
 		for (j = 0; j < GLOBE_LEDS; j++)
-			imageBuffer[i][j] = i;
+			imageBuffer[i][j] = 0;
 	// LED controls are outputs
 	for (i = 0; i < GLOBE_LEDS; i++)
 		ledPins[i].makeOutput(1);
@@ -82,7 +82,7 @@ void Globe::_displayLedNxt() {
 	if (ledNxt >= GLOBE_LEDS) {
 		ledNxt = 0;
 		columnNxt+= 1;
-		if (columnNxt > GLOBE_COLUMNS)
+		if (columnNxt >= GLOBE_COLUMNS)
 			columnNxt = 0;
 	}
 }
