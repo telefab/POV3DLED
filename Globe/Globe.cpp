@@ -94,8 +94,8 @@ void Globe::_displayLedNxt() {
 ISR (INT4_vect)
 {
     // Set the measured delay as LED timer delay and reset
-    // The 8 factor is due to the different timer speeds
-    OCR3A = TCNT1 / (GLOBE_LEDS * GLOBE_COLUMNS / 8);
+    // The 4 factor is due to the different timer speeds
+    OCR3A = TCNT1 / (GLOBE_LEDS * GLOBE_COLUMNS / 4);
     TCNT1 = 0;
     // Start the round again
     Globe::get()->_restartRound();
