@@ -61,11 +61,11 @@ private:
   volatile uint8_t ledNxt;
 
   /**
-   * Rotation shift indicating the first column
-   * of the buffer. It is a way to rotate
-   * the image on the globe easily
+   * Rotated column to display.
+   * This is a way to rotate the image
+   * without changing the buffer.
    */
-  uint8_t rotationShift;
+   volatile uint8_t columnRotNxt;
       
   /**
    * Is it the first detected round?

@@ -19,7 +19,7 @@ Globe::Globe() :
   ledCur(GLOBE_LEDS-1),
   columnNxt(0),
   ledNxt(0),
-  rotationShift(0),
+  columnRotNxt(0),
   firstRound(1),
   paused(1),
   remRounds(0)
@@ -65,11 +65,11 @@ void Globe::begin() {
 
 void Globe::_restartRound() {
   // Restart the display
+  // Keep the rotation, to do before resetting anything
+  columnRotNxt = getRotation();
   columnNxt = 0;
   ledNxt = 0;
   paused = 0;
-  // Not the first round any more
-  firstRound = 0;
   // Decrease the rounds delay if any
   if (remRounds > 0)
     remRounds--;
@@ -84,7 +84,7 @@ uint8_t Globe::_displayLedNxt() {
     return 0;
   // Select the right colors
   for (i = 0; i < GLOBE_COLORS; i++)
-    colorPins[i].set((imageBuffer[(columnNxt+rotationShift) % GLOBE_COLUMNS][ledNxt] & (1 << i)) == 0 ? 1 : 0);
+    colorPins[i].set((imageBuffer[columnRotNxt][ledNxt] & (1 << i)) == 0 ? 1 : 0);
   // Switch the proper led on
   ledPins[ledNxt].set(1);
   // Save the new state
@@ -101,12 +101,19 @@ uint8_t Globe::_displayLedNxt() {
       // Finished the round, pause
       paused = 1;
     }
+    // Precompute the rotated column to display
+    columnRotNxt+= 1;
+    if (columnRotNxt >= GLOBE_COLUMNS)
+      columnRotNxt = 0;
   }
   return 1;
 }
 
 uint8_t Globe::_isFirstRound() {
-  return firstRound;
+  uint8_t result = firstRound;
+  // Not the first round any more
+  firstRound = 0;
+  return result;
 }
 
 uint8_t Globe::getWidth() {
@@ -126,19 +133,30 @@ uint8_t Globe::getLed(uint8_t column, uint8_t line) {
 }
 
 void Globe::rotate(int16_t steps) {
-  // The added GLOBE_COLUMNS is to avoid negative values before the modulo
-  rotationShift = (rotationShift + steps + GLOBE_COLUMNS) % GLOBE_COLUMNS;
+  // The rotated column must stay in the buffer width
+  if (steps < -columnRotNxt)
+    columnRotNxt+= GLOBE_COLUMNS + steps;
+  else {
+    columnRotNxt+= steps;
+    if (columnRotNxt >= GLOBE_COLUMNS)
+      columnRotNxt = 0;
+  }
 }
 
 void Globe::clearRotation() {
-  rotationShift = 0;
+  // Displayed column is the actual column
+  columnRotNxt = columnNxt;
 }
 
 uint8_t Globe::getRotation() {
-  return rotationShift;
+  if (columnRotNxt >= columnNxt)
+    return columnRotNxt - columnNxt;
+  else
+    return GLOBE_COLUMNS - columnNxt + columnRotNxt;
 }
 
 void Globe::delayRound(uint16_t rounds) {
+  // Actively wait for the rounds to get to 0
   remRounds = rounds;
   while (remRounds > 0) {}
 }
