@@ -19,8 +19,10 @@ Globe::Globe() :
   ledCur(GLOBE_LEDS-1),
   columnNxt(0),
   ledNxt(0),
+  rotationShift(0),
   firstRound(1),
-  paused(1)
+  paused(1),
+  remRounds(0)
 {
 }
 
@@ -30,7 +32,7 @@ Globe* Globe::get() {
   return Globe::singleton;
 }
 
-void Globe::setup() {
+void Globe::begin() {
   uint8_t i, j;
   // Reset the globe buffer to all black
   for (i = 0; i < GLOBE_COLUMNS; i++)
@@ -62,9 +64,15 @@ void Globe::setup() {
 }
 
 void Globe::_restartRound() {
+  // Restart the display
   columnNxt = 0;
   ledNxt = 0;
   paused = 0;
+  // Not the first round any more
+  firstRound = 0;
+  // Decrease the rounds delay if any
+  if (remRounds > 0)
+    remRounds--;
 }
 
 uint8_t Globe::_displayLedNxt() {
@@ -76,7 +84,7 @@ uint8_t Globe::_displayLedNxt() {
     return 0;
   // Select the right colors
   for (i = 0; i < GLOBE_COLORS; i++)
-    colorPins[i].set((imageBuffer[columnNxt][ledNxt] & (1 << i)) == 0 ? 1 : 0);
+    colorPins[i].set((imageBuffer[(columnNxt+rotationShift) % GLOBE_COLUMNS][ledNxt] & (1 << i)) == 0 ? 1 : 0);
   // Switch the proper led on
   ledPins[ledNxt].set(1);
   // Save the new state
@@ -98,9 +106,7 @@ uint8_t Globe::_displayLedNxt() {
 }
 
 uint8_t Globe::_isFirstRound() {
-  uint8_t result = firstRound;
-  firstRound = 0;
-  return result;
+  return firstRound;
 }
 
 uint8_t Globe::getWidth() {
@@ -113,6 +119,28 @@ uint8_t Globe::getHeight() {
 
 void Globe::setLed(uint8_t column, uint8_t line, uint8_t color) {
   imageBuffer[column][line] = color;
+}
+
+uint8_t Globe::getLed(uint8_t column, uint8_t line) {
+  return imageBuffer[column][line];
+}
+
+void Globe::rotate(int16_t steps) {
+  // The added GLOBE_COLUMNS is to avoid negative values before the modulo
+  rotationShift = (rotationShift + steps + GLOBE_COLUMNS) % GLOBE_COLUMNS;
+}
+
+void Globe::clearRotation() {
+  rotationShift = 0;
+}
+
+uint8_t Globe::getRotation() {
+  return rotationShift;
+}
+
+void Globe::delayRound(uint16_t rounds) {
+  remRounds = rounds;
+  while (remRounds > 0) {}
 }
 
 /**

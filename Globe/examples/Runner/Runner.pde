@@ -8,8 +8,8 @@
 // Configuration
 #define COLOR 4 // Color of the runner
 #define STEP_SIZE 2 // Speed when running (columns per frame)
-#define FRAME_DELAY 80 // Animation speed
-#define STATIC_FRAMES 100 // Frames during which the runner stays at 0
+#define FRAME_DELAY 1 // Animation speed (in number of rounds)
+#define STATIC_FRAMES 50 // Frames during which the runner stays at 0
 
 // Images of a runner (each bit is an image, 8 images are mixed)
 #define RUNNER_WIDTH 24
@@ -52,30 +52,25 @@ const uint8_t runners[RUNNER_HEIGHT*RUNNER_WIDTH] = {
 
 
 uint8_t currentFrame = 0;
-uint8_t currentPos = 0;
 uint16_t staticDelay = 0;
 
 Globe *globe = Globe::get();
 
 void setup() {
-  globe->setup();
+  globe->begin();
 }
 
 void loop() {
   // Refresh the display
-  // (start a bit before because the image moves and has to be erased)
   int i, j, left, top;
   uint8_t color;
-  for (i = -STEP_SIZE; i < RUNNER_WIDTH; i++) {
+  for (i = 0; i < RUNNER_WIDTH; i++) {
     for (j = 0; j < RUNNER_HEIGHT; j++) {
       // Find the position of the LED on the globe
-      left = 2 * globe->getWidth() + RUNNER_WIDTH - 1 - i - currentPos;
-      left = left % globe->getWidth();
+      left = RUNNER_WIDTH - 1 - i;
       top = j + (globe->getHeight() - RUNNER_HEIGHT)/2;
       // Decide the color
-      if (i < 0)
-        color = 0;
-      else if ((runners[i + j * RUNNER_WIDTH] & (1 << currentFrame)) == 0)
+      if ((runners[i + j * RUNNER_WIDTH] & (1 << currentFrame)) == 0)
         color = 0;
       else
         color = COLOR;
@@ -85,11 +80,12 @@ void loop() {
   }
   // Let the runner move sometimes
   if (staticDelay == STATIC_FRAMES) {
-    currentPos+= STEP_SIZE;
-    if (currentPos >= globe->getWidth()) {
-      currentPos = 0;
+    if (globe->getRotation() < STEP_SIZE) {
+      globe->clearRotation();
       // Stop moving
       staticDelay = 0;
+    } else {
+      globe->rotate(-STEP_SIZE);
     }
   } else {
     // Count until next move
@@ -99,5 +95,5 @@ void loop() {
   currentFrame++;
   if (currentFrame >= RUNNER_FRAMES)
     currentFrame = 0;
-  delay(FRAME_DELAY);
+  globe->delayRound(FRAME_DELAY);
 }

@@ -7,7 +7,7 @@
 
 // Configuration
 #define ENABLE_ROTATION 1 // Enable = 1, disable = 0
-#define ROTATION_DELAY 500 // Delay to rotate of one step (ms)
+#define ROTATION_DELAY 3 // Delay to rotate of one step (number of rounds)
 
 // World image
 #define HEIGHT 39
@@ -98,7 +98,7 @@ Globe *globe = Globe::get();
 uint8_t currentPos = 0;
 
 void setup() {
-  globe->setup();
+  globe->begin();
   uint8_t i,j;
   for (i = 0; i < WIDTH; i++)
     for (j = 0; j < HEIGHT; j++)
@@ -107,11 +107,7 @@ void setup() {
 
 void loop() {
   if (ENABLE_ROTATION) {
-    uint8_t i,j, temp;
-    for (i = 0; i < WIDTH; i++)
-      for (j = 0; j < HEIGHT; j++)
-        globe->setLed((i + currentPos) % globe->getWidth(), j, world[i][j]);
-    currentPos = (currentPos + 1) % globe->getWidth();
-    delay(ROTATION_DELAY);
+    globe->rotate(1);
+    globe->delayRound(ROTATION_DELAY);
   }
 }

@@ -24,38 +24,38 @@
 #define PIN_L(x) Pin(&PORTL, &PINL, &DDRL, (x))
 
 class Pin {
-  private:
-    // Port PORT register
-    volatile uint8_t* port;
-    // Port PIN register
-    volatile uint8_t* pin;
-    // Port DDR register
-    volatile uint8_t* ddr;
-    // Index of the PIN
-    uint8_t index;
+private:
+  // Port PORT register
+  volatile uint8_t* port;
+  // Port PIN register
+  volatile uint8_t* pin;
+  // Port DDR register
+  volatile uint8_t* ddr;
+  // Index of the PIN
+  uint8_t index;
 
-  public:
+public:
 
-    /**
-     * Constructor: port and pin
-     */
-    Pin(volatile uint8_t* port, volatile uint8_t* pin, volatile uint8_t* ddr, uint8_t index);
+  /**
+   * Constructor: port and pin
+   */
+  Pin(volatile uint8_t* port, volatile uint8_t* pin, volatile uint8_t* ddr, uint8_t index);
 
-    /**
-     * Set the value of a PIN.
-     * Can also be used to set the pullup on an input
-     */
-    void set(uint8_t value) const;
+  /**
+   * Set the value of a PIN.
+   * Can also be used to set the pullup on an input
+   */
+  void set(uint8_t value) const;
 
-    /**
-     * Get the value of a PIN
-     */
-    uint8_t get() const;
+  /**
+   * Get the value of a PIN
+   */
+  uint8_t get() const;
 
-    /**
-     * Make a PIN an output or input
-     */
-    void makeOutput(uint8_t value) const;
+  /**
+   * Make a PIN an output or input
+   */
+  void makeOutput(uint8_t value) const;
 };
 
 #endif
