@@ -28,19 +28,19 @@ private:
    * PIN numbers to select a LED
    * 1 means selected
    */
-  const static PIN_TYPE ledPins[GLOBE_LEDS];
+  const static Pin ledPins[GLOBE_LEDS];
 
   /**
    * PIN numbers to choose colors
    * 0 means the color is on
    */
-  const static PIN_TYPE colorPins[GLOBE_COLORS];
+  const static Pin colorPins[GLOBE_COLORS];
 
   /**
    * PIN number of the round sensor
    * 1 -> 0 -> 1 once per round
    */
-  const static PIN_TYPE sensorPin;
+  const static Pin sensorPin;
 
   /**
    * Buffer to store the image to display.
