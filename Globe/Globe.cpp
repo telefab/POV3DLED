@@ -6,13 +6,13 @@
 
 Globe* Globe::singleton = 0;
 
-const Pin Globe::ledPins[GLOBE_LEDS] = {PinF(2), PinF(3), PinF(4), PinF(5), PinF(6), PinF(7), PinK(0), PinK(1), PinK(2), PinB(1), PinB(0),
-  PinB(3), PinB(2), PinL(1), PinL(0), PinL(3), PinL(2), PinL(5), PinL(4), PinL(7), PinL(6), PinG(1), PinG(0), PinD(7), PinG(2), 
-  PinC(1), PinC(0), PinC(3), PinC(2), PinC(5), PinC(4), PinC(7), PinC(6), PinA(6), PinA(7), PinA(4), PinA(5), PinA(2), PinA(3)};
+const PIN_TYPE Globe::ledPins[GLOBE_LEDS] = {PIN_F(2), PIN_F(3), PIN_F(4), PIN_F(5), PIN_F(6), PIN_F(7), PIN_K(0), PIN_K(1), PIN_K(2), PIN_B(1), PIN_B(0),
+  PIN_B(3), PIN_B(2), PIN_L(1), PIN_L(0), PIN_L(3), PIN_L(2), PIN_L(5), PIN_L(4), PIN_L(7), PIN_L(6), PIN_G(1), PIN_G(0), PIN_D(7), PIN_G(2), 
+  PIN_C(1), PIN_C(0), PIN_C(3), PIN_C(2), PIN_C(5), PIN_C(4), PIN_C(7), PIN_C(6), PIN_A(6), PIN_A(7), PIN_A(4), PIN_A(5), PIN_A(2), PIN_A(3)};
 
-const Pin Globe::colorPins[GLOBE_COLORS] = {PinA(0), PinF(0), PinA(1)};
+const PIN_TYPE Globe::colorPins[GLOBE_COLORS] = {PIN_A(0), PIN_F(0), PIN_A(1)};
 
-const Pin Globe::sensorPin = PinE(4);
+const PIN_TYPE Globe::sensorPin = PIN_E(4);
 
 Globe::Globe() :
   columnCur(GLOBE_COLUMNS-1),
@@ -84,7 +84,7 @@ uint8_t Globe::_displayLedNxt() {
     return 0;
   // Select the right colors
   for (i = 0; i < GLOBE_COLORS; i++)
-    colorPins[i].set(~((imageBuffer[columnRotNxt][ledNxt] >> i) & 1));
+    colorPins[i].set((imageBuffer[columnRotNxt][ledNxt] & (1 << i)) == 0 ? 1 : 0);
   // Switch the proper led on
   ledPins[ledNxt].set(1);
   // Save the new state
