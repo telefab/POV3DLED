@@ -140,6 +140,20 @@ public:
    * Get the color of a LED in the buffer
    */
   uint8_t getLed(uint8_t column, uint8_t line);
+  
+  /**
+   * Set the color of a LED in the buffer.
+   * Indexes act as if the buffer were really rotated
+   * by the rotation functions.
+   */
+  void setLedRot(uint8_t column, uint8_t line, uint8_t color);
+  
+  /**
+   * Get the color of a LED in the buffer.
+   * Indexes act as if the buffer were really rotated
+   * by the rotation functions.
+   */
+  uint8_t getLedRot(uint8_t column, uint8_t line);
 
   /**
    * Rotate the image in an efficient way.

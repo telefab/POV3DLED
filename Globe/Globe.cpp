@@ -24,6 +24,11 @@ Globe::Globe() :
   paused(1),
   remRounds(0)
 {
+  uint8_t i, j;
+  // Set the globe buffer to all black
+  for (i = 0; i < GLOBE_COLUMNS; i++)
+    for (j = 0; j < GLOBE_LEDS; j++)
+      imageBuffer[i][j] = 0;
 }
 
 Globe* Globe::get() {
@@ -33,11 +38,7 @@ Globe* Globe::get() {
 }
 
 void Globe::begin() {
-  uint8_t i, j;
-  // Reset the globe buffer to all black
-  for (i = 0; i < GLOBE_COLUMNS; i++)
-    for (j = 0; j < GLOBE_LEDS; j++)
-      imageBuffer[i][j] = 0;
+  uint8_t i;
   // LED controls are outputs
   for (i = 0; i < GLOBE_LEDS; i++)
     ledPins[i].makeOutput(1);
@@ -130,6 +131,20 @@ void Globe::setLed(uint8_t column, uint8_t line, uint8_t color) {
 
 uint8_t Globe::getLed(uint8_t column, uint8_t line) {
   return imageBuffer[column][line];
+}
+
+void Globe::setLedRot(uint8_t column, uint8_t line, uint8_t color) {
+  uint8_t columnRot = column + getRotation();
+  if (columnRot >= GLOBE_COLUMNS)
+    columnRot-= GLOBE_COLUMNS;
+  imageBuffer[columnRot][line] = color;
+}
+
+uint8_t Globe::getLedRot(uint8_t column, uint8_t line) {
+  uint8_t columnRot = column + getRotation();
+  if (columnRot >= GLOBE_COLUMNS)
+    columnRot-= GLOBE_COLUMNS;
+  return imageBuffer[columnRot][line];
 }
 
 void Globe::rotate(int16_t steps) {

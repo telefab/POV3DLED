@@ -95,8 +95,6 @@ const byte world[WIDTH][HEIGHT] = {
 
 Globe *globe = Globe::get();
 
-uint8_t currentPos = 0;
-
 void setup() {
   globe->begin();
   uint8_t i,j;
