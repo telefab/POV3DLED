@@ -84,7 +84,7 @@ uint8_t Globe::_displayLedNxt() {
     return 0;
   // Select the right colors
   for (i = 0; i < GLOBE_COLORS; i++)
-    colorPins[i].set(~((imageBuffer[columnRotNxt][ledNxt] >> i) & 1));
+    colorPins[i].set(((~imageBuffer[columnRotNxt][ledNxt]) >> i) & 1);
   // Switch the proper led on
   ledPins[ledNxt].set(1);
   // Save the new state
@@ -134,12 +134,12 @@ uint8_t Globe::getLed(uint8_t column, uint8_t line) {
 
 void Globe::rotate(int16_t steps) {
   // The rotated column must stay in the buffer width
-  if (steps < -columnRotNxt)
-    columnRotNxt+= GLOBE_COLUMNS + steps;
+  if (steps > columnRotNxt)
+    columnRotNxt-= steps - GLOBE_COLUMNS;
   else {
-    columnRotNxt+= steps;
+    columnRotNxt-= steps;
     if (columnRotNxt >= GLOBE_COLUMNS)
-      columnRotNxt = 0;
+      columnRotNxt-= GLOBE_COLUMNS;
   }
 }
 

@@ -80,12 +80,11 @@ void loop() {
   }
   // Let the runner move sometimes
   if (staticDelay == STATIC_FRAMES) {
+    globe->rotate(-STEP_SIZE);
     if (globe->getRotation() < STEP_SIZE) {
       globe->clearRotation();
       // Stop moving
       staticDelay = 0;
-    } else {
-      globe->rotate(-STEP_SIZE);
     }
   } else {
     // Count until next move
