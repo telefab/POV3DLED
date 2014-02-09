@@ -84,7 +84,7 @@ uint8_t Globe::_displayLedNxt() {
     return 0;
   // Select the right colors
   for (i = 0; i < GLOBE_COLORS; i++)
-    colorPins[i].set((imageBuffer[columnRotNxt][ledNxt] & (1 << i)) == 0 ? 1 : 0);
+    colorPins[i].set(~((imageBuffer[columnRotNxt][ledNxt] >> i) & 1));
   // Switch the proper led on
   ledPins[ledNxt].set(1);
   // Save the new state

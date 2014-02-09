@@ -15,7 +15,7 @@ void Pin::set(uint8_t value) const {
 }
 
 uint8_t Pin::get() const {
-  return *pin & (1 << index) != 0;
+  return (*pin >> index) & 1;
 }
 
 void Pin::makeOutput(uint8_t value) const {
