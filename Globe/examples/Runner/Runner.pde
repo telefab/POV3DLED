@@ -67,7 +67,7 @@ void loop() {
   for (i = 0; i < RUNNER_WIDTH; i++) {
     for (j = 0; j < RUNNER_HEIGHT; j++) {
       // Find the position of the LED on the globe
-      left = RUNNER_WIDTH - 1 - i;
+      left = (globe->getWidth() + RUNNER_WIDTH)/2 - i;
       top = j + (globe->getHeight() - RUNNER_HEIGHT)/2;
       // Decide the color
       if ((runners[i + j * RUNNER_WIDTH] & (1 << currentFrame)) == 0)
