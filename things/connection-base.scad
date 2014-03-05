@@ -51,8 +51,8 @@ conductor_block_width = 3;
 // Connector
 connector_sup_offset = 1.3;
 connector_sup_width = 4;
-connector_base_depth = 2;
-connector_base_width = 7;
+connector_base_depth = 3;
+connector_base_width = 9;
 connector_base_height = 6;
 connector_base_hole_diam = 3.5;
 connector_contact_diam = 7;
@@ -108,9 +108,9 @@ module base() {
 					cube([connector_base_width, connector_sup_length + connector_base_depth*2, connector_base_height + base_height]);
 				translate([-conductor_diam_out/2 - connector_sup_width - connector_sup_offset, -connector_sup_length/2, 0])
 					cube([connector_base_width, connector_sup_length, connector_base_height + base_height]);
-				translate([-conductor_diam_out/2 - connector_sup_width/2 - connector_sup_offset + connector_base_hole_diam/2, connector_sup_length/2 + connector_base_depth, base_height + connector_base_height/2])
+				translate([-conductor_diam_out/2 - connector_sup_offset - connector_sup_width + connector_base_width/2, connector_sup_length/2 + connector_base_depth, base_height + connector_base_height/2])
 					rotate([90, 0, 0])
-						cylinder(h = connector_sup_length + connector_base_depth*2, d = connector_base_hole_diam);
+						cylinder(h = connector_sup_length + connector_base_depth*2, r = connector_base_hole_diam/2);
 			}
 		}
 		// Screws
@@ -200,7 +200,7 @@ module connector() {
 				cube([connector_contact_wall + connector_contact_diam, connector_sup_length, connector_contact_height + connector_contact_wall]);
 		}
 		// Screw location
-		translate([connector_sup_width/2 + connector_base_hole_diam/2, connector_sup_length + connector_base_depth, connector_base_height/2])
+		translate([connector_base_width/2, connector_sup_length + connector_base_depth, connector_base_height/2])
 			rotate([90, 0, 0])
 				cylinder(h = connector_sup_length + connector_base_depth*2, r = connector_base_hole_diam/2);
 		// First contact
