@@ -46,12 +46,14 @@ conductor_height = 1;
 conductor_sup_height = cyl_screw_diam;
 conductor_sup_width = 10;
 conductor_space = 3;
+conductor_wire_space = 7;
+conductor_wire_sep = 1;
 conductor_offset = cyl_screw_offset + cyl_screw_diam + 0.2;
 conductor_block_width = 3;
 // Connector
 connector_sup_offset = 1.3;
 connector_sup_width = 4;
-connector_base_depth = 3;
+connector_base_depth = 2.8;
 connector_base_width = 9;
 connector_base_height = 6;
 connector_base_hole_diam = 3.5;
@@ -145,8 +147,8 @@ module cyl() {
 					rotate([0, 90, 0])
 						cylinder(h = cyl_width + 2, r=sensor_diam/2);
 				// Holes to connect the conductors
-				translate([-cyl_in_diam/2-(cyl_width+cyl_wire_width), -cyl_wire_space/2, conductor_offset - cyl_offset + conductor_height])
-					cube([cyl_in_diam+2*(cyl_width+cyl_wire_width), cyl_wire_space, conductor_space]);
+				translate([-cyl_in_diam/2-(cyl_width+cyl_wire_width), -conductor_wire_space/2, conductor_offset - cyl_offset + conductor_height])
+					cube([cyl_in_diam+2*(cyl_width+cyl_wire_width), conductor_wire_space, conductor_space]);
 				// Holes to block the top conductor
 				rotate([0,0,50])
 					translate([-cyl_in_diam/2-(cyl_width+cyl_wire_width), -conductor_block_width/2, conductor_offset - cyl_offset + 2*conductor_height + conductor_space])
@@ -222,8 +224,10 @@ module conductor_spacer() {
 		difference() {
 			cylinder(h = conductor_space, r = conductor_diam_out/2);
 			cylinder(h = conductor_space, r = cyl_in_diam/2 + cyl_wire_width + cyl_width + 0.5);
-			translate([-cyl_in_diam/2-(cyl_width+cyl_wire_width)-(conductor_diam_out-conductor_diam_in)/3, -cyl_wire_space/2, 0])
-				cube([cyl_in_diam+2*(cyl_width+cyl_wire_width)+2*(conductor_diam_out-conductor_diam_in)/3, cyl_wire_space, conductor_space]);
+			translate([-cyl_in_diam/2-(cyl_width+cyl_wire_width)-(conductor_diam_out-conductor_diam_in)/3, -conductor_wire_space/2, 0])
+				cube([cyl_in_diam/2+(cyl_width+cyl_wire_width)+(conductor_diam_out-conductor_diam_in)/3, conductor_wire_space, conductor_space-conductor_wire_sep]);
+			translate([0, -conductor_wire_space/2, conductor_wire_sep])
+				cube([cyl_in_diam/2+(cyl_width+cyl_wire_width)+(conductor_diam_out-conductor_diam_in)/3, conductor_wire_space, conductor_space-conductor_wire_sep]);
 		}
 }
 
