@@ -68,10 +68,15 @@ private:
    volatile uint8_t columnRotNxt;
       
   /**
-   * Is it the first detected round?
-   * Important to determine the speed
+   * Count the number of rounds.
+   * Stop at max. value
    */
-  volatile uint8_t firstRound;
+  volatile uint8_t roundCount;
+      
+  /**
+   * Delay of the last round (in timer steps)
+   */
+  volatile uint16_t roundDelay;
   
   /**
    * If a round is done, pause the display
@@ -116,10 +121,32 @@ public:
   uint8_t _displayLedNxt();
       
   /**
-   * To call on a new round to check
-   * if it is the first
+   * Check if it is the first round
    */
   uint8_t _isFirstRound();
+      
+  /**
+   * Check if it is one of the first
+   * acceleration round
+   */
+  uint8_t _isAccelRound();
+  
+  /**
+   * Consider that the globe did not start turning yet.
+   */
+  void _clearRound();
+  
+  /**
+   * Set the last round delay.
+   * From setting this, firstRound is false.
+   */
+  void _setRoundDelay(uint16_t delay);
+  
+  /**
+   * Get the last round delay
+   * in timer steps
+   */
+  uint16_t getRoundDelay();
   
   /**
    * Number of columns

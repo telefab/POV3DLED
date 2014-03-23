@@ -1,8 +1,8 @@
 #include "Globe.h"
 #include <avr/interrupt.h>
 
-#define START_TIMER3 TCCR3B |= (1 << WGM12) | (1 << CS11) | (1 << CS10)
-#define STOP_TIMER3 TCCR3B &= ~((1 << WGM12) | (1 << CS11) | (1 << CS10))
+#define START_TIMER3 TCCR3B |= (1 << WGM12) | (1 << CS10)
+#define STOP_TIMER3 TCCR3B &= ~((1 << WGM12) | (1 << CS10))
 
 Globe* Globe::singleton = 0;
 
@@ -20,7 +20,8 @@ Globe::Globe() :
   columnNxt(0),
   ledNxt(0),
   columnRotNxt(0),
-  firstRound(1),
+  roundCount(0),
+  roundDelay(0),
   paused(1),
   remRounds(0)
 {
@@ -49,11 +50,13 @@ void Globe::begin() {
   sensorPin.set(1);
   // Disable global interrupts
   cli();
-  // Initialize the round timer (Timer1, /256, counting)
+  // Initialize the round timer (Timer1, /256, counting, compare interrupt at max to detect globe stop)
   TCCR1A = 0;
   TCCR1B = 0;
   TCCR1B |= (1 << CS12);
-  // Initialize the LED timer (Timer3, /64, compare interrupt, not started yet)
+  TIMSK1 |= (1 << OCIE1A);
+  OCR1A = 0xFFFF;
+  // Initialize the LED timer (Timer3, /1, compare interrupt, not started yet)
   TCCR3A = 0;
   TCCR3B = 0;
   TIMSK3 |= (1 << OCIE1A);
@@ -111,10 +114,28 @@ uint8_t Globe::_displayLedNxt() {
 }
 
 uint8_t Globe::_isFirstRound() {
-  uint8_t result = firstRound;
-  // Not the first round any more
-  firstRound = 0;
-  return result;
+  return roundCount == 0;
+}
+
+uint8_t Globe::_isAccelRound() {
+  // The 20 first rounds are the acceleration phase
+  return roundCount < 20;
+}
+
+void Globe::_clearRound() {
+  roundCount = 0;
+  roundDelay = 0;
+}
+
+void Globe::_setRoundDelay(uint16_t delay) {
+  roundDelay = delay;
+  // Count the first rounds
+  if (roundCount < 255)
+    roundCount++;
+}
+
+uint16_t Globe::getRoundDelay() {
+  return roundDelay;
 }
 
 uint8_t Globe::getWidth() {
@@ -182,18 +203,32 @@ void Globe::delayRound(uint16_t rounds) {
  */
 ISR (INT4_vect)
 {
-  // Set the measured delay as LED timer delay and reset
-  // The 8 factor is due to the different timer speeds
-  // The -1 is an adjustment parameter
-  // to make sure that everything is displayed
-  OCR3A = TCNT1 / (GLOBE_LEDS * GLOBE_COLUMNS / 4) - 1;
-  TCNT1 = 0;
-  // Start the round again
-  // not at first round because the speed of the globe is unknown
-  if (!Globe::get()->_isFirstRound()) {
-    Globe::get()->_restartRound();
-    START_TIMER3;
+  Globe* globe = Globe::get();
+  uint16_t delay = TCNT1;
+  // Do not accept rounds faster than 80% of the last delay
+  // Except during the first acceleration phase
+  if (globe->_isAccelRound() || delay >= (int) (8. * ((float) globe->getRoundDelay()) / 10.)) {
+    // Set the measured delay as LED timer delay and reset
+    // The 64 factor is due to the different timer speeds
+    // The -1 is an adjustment parameter
+    // to make sure that everything is displayed
+    OCR3A = (int) (((float) delay) / (((float) (GLOBE_LEDS * GLOBE_COLUMNS)) / 256.));
+    TCNT1 = 0;
+    // Start the round again
+    // not at first round because the speed of the globe is unknown
+    if (!globe->_isFirstRound()) {
+      globe->_restartRound();
+      START_TIMER3;
+    }
+    globe->_setRoundDelay(delay);
   }
+}
+
+/**
+ * Called by the first timer if a round is too slow
+ */
+ISR(TIMER1_COMPA_vect) {
+  Globe::get()->_clearRound();
 }
 
 /**
