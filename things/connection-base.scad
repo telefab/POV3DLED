@@ -1,8 +1,10 @@
 // Connection base
-// This file contains 2 separate elements:
+// This file contains separate elements:
 // * a static base, fixed to the motor;
 // * a rotating cylinder, fixed to the sphere.
-// It is used to add a LED and light sensor to detect a reference angle.
+// * a connector 
+// It is used to transmit power between the base and the cylinder,
+// and to add a LED and light sensor to detect a reference angle.
 
 // Resolution
 $fa = 3; // Minimum angle (lower = higher max resolution, def 12)
@@ -185,6 +187,20 @@ module cyl() {
 	}
 }
 
+// Cache to focus the LED light
+module led_cache() {
+	translate([cache_diam/2, 0, led_diam/2 + base_height]) {
+		difference() {
+			rotate([0,90,0])
+				cylinder(h = 2.8, r = (led_diam) / 2);
+			cube([3, 1, led_diam-2], center=true);
+			translate([0.8,0,0])
+				rotate([0,90,0])
+					cylinder(h = 2, r = (led_diam) / 2 - 0.5);
+		}
+	}
+}
+
 // Fixed part of the connector
 module connector() {
 	translate([-conductor_diam_out/2 - connector_sup_width - connector_sup_offset, -connector_sup_length/2, base_height])
@@ -250,6 +266,9 @@ color("Green")
 // Rotating part
 color("Red")
 	cyl();
+// LED focusing cache
+color("Purple")
+	led_cache();
 // Conductor spacer
 color("Yellow")
 	conductor_spacer();
