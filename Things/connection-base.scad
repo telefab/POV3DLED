@@ -33,10 +33,12 @@ cyl_screw_diam = 4.1;
 // light sensor
 sensor_offset = 0.5;
 sensor_diam = 5;
+sensor_opening_width = 0.8;
 // LED box
-led_length = 11;
+led_length = 12;
 led_diam = 7;
 led_box_width = 2;
+led_opening_width = sensor_opening_width;
 // LED cache
 cache_width = 2.5;
 cache_height = cyl_screw_offset - 0.2;
@@ -90,21 +92,15 @@ module base() {
 					}
 					// LED box
 					translate([cache_diam/2, - led_diam/2 - led_box_width, 0]) {
-						difference() {
-							cube([led_length + led_box_width, led_diam + 2 * led_box_width, led_diam + led_box_width + base_height]);
-							translate([0, led_box_width*2, led_diam/2 + base_height])
-								rotate([0, 90, 0])
-									cylinder(h = led_length + led_box_width, r = wire_diam/2);
-							translate([0, led_diam, led_diam/2 + base_height])
-								rotate([0, 90, 0])
-									cylinder(h = led_length + led_box_width, r = wire_diam/2);
-						}
+						cube([led_length, led_diam + 2 * led_box_width, led_diam + led_box_width + base_height]);
 					}
 				}
 				// LED space
-				translate([cache_diam/2-1, 0, led_diam/2 + base_height])
+				translate([cache_diam/2, 0, led_diam/2 + base_height])
 					rotate([0, 90, 0])
 						cylinder(h = led_length+1, r = led_diam/2);
+				translate([cache_diam/2 - 2, -led_opening_width/2, base_height])
+					cube([cache_width+4, led_opening_width, led_diam]);
 			}
 			// Holding part for the connector
 			difference() {
@@ -147,7 +143,9 @@ module cyl() {
 				// Light sensor
 				translate([cyl_in_diam/2 + cyl_wire_width - 1, 0, sensor_offset + sensor_diam/2])
 					rotate([0, 90, 0])
-						cylinder(h = cyl_width + 2, r=sensor_diam/2);
+						cylinder(h = cyl_width, r=sensor_diam/2);
+				translate([cyl_in_diam/2 + cyl_wire_width - 1, -sensor_opening_width/2, sensor_offset])
+					cube([cyl_width+4, sensor_opening_width, sensor_diam]);
 				// Holes to connect the conductors
 				translate([-cyl_in_diam/2-(cyl_width+cyl_wire_width), -conductor_wire_space/2, conductor_offset - cyl_offset + conductor_height])
 					cube([cyl_in_diam+2*(cyl_width+cyl_wire_width), conductor_wire_space, conductor_space]);
@@ -183,20 +181,6 @@ module cyl() {
 							cube([conductor_sup_width-0.4, cyl_in_diam + 2*(cyl_width + cyl_wire_width), conductor_offset - cyl_offset]);
 				}
 			}
-		}
-	}
-}
-
-// Cache to focus the LED light
-module led_cache() {
-	translate([cache_diam/2, 0, led_diam/2 + base_height]) {
-		difference() {
-			rotate([0,90,0])
-				cylinder(h = 2.8, r = (led_diam) / 2);
-			cube([3, 1, led_diam-2], center=true);
-			translate([0.8,0,0])
-				rotate([0,90,0])
-					cylinder(h = 2, r = (led_diam) / 2 - 0.5);
 		}
 	}
 }
@@ -264,21 +248,18 @@ module conductor() {
 color("Green")
 	base();
 // Rotating part
-color("Red")
-	cyl();
-// LED focusing cache
-color("Purple")
-	led_cache();
+//color("Red")
+//	cyl();
 // Conductor spacer
-color("Yellow")
-	conductor_spacer();
+//color("Yellow")
+//	conductor_spacer();
 // Conductor block
-color("Yellow")
-	translate([30, 30, 0])
-		conductor_block();
+//color("Yellow")
+//	translate([30, 30, 0])
+//		conductor_block();
 // Fixed connector
-color("Orange")
-	connector();
+//color("Orange")
+//	connector();
 // Conductors simulated
 //color("Blue") {
 //	translate([0,0,conductor_offset])
