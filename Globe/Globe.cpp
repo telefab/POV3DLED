@@ -1,5 +1,8 @@
+#if defined(__AVR_ATmega2560__)
+
 #include "Globe.h"
 #include <avr/interrupt.h>
+#include <Arduino.h>
 
 #define START_TIMER3 TCCR3B |= (1 << WGM12) | (1 << CS10)
 #define STOP_TIMER3 TCCR3B &= ~((1 << WGM12) | (1 << CS10))
@@ -7,7 +10,7 @@
 Globe* Globe::singleton = 0;
 
 const PIN_TYPE Globe::ledPins[GLOBE_LEDS] = {PIN_F(2), PIN_F(3), PIN_F(4), PIN_F(5), PIN_F(6), PIN_F(7), PIN_K(0), PIN_K(1), PIN_K(2), PIN_B(1), PIN_B(0),
-  PIN_B(3), PIN_B(2), PIN_L(1), PIN_L(0), PIN_L(3), PIN_L(2), PIN_L(5), PIN_L(4), PIN_L(7), PIN_L(6), PIN_G(1), PIN_G(0), PIN_D(7), PIN_G(2), 
+  PIN_B(3), PIN_B(2), PIN_L(1), PIN_K(3), PIN_L(3), PIN_L(2), PIN_L(5), PIN_L(4), PIN_L(7), PIN_L(6), PIN_G(1), PIN_G(0), PIN_D(7), PIN_G(2), 
   PIN_C(1), PIN_C(0), PIN_C(3), PIN_C(2), PIN_C(5), PIN_C(4), PIN_C(7), PIN_C(6), PIN_A(6), PIN_A(7), PIN_A(4), PIN_A(5), PIN_A(2), PIN_A(3)};
 
 const PIN_TYPE Globe::colorPins[GLOBE_COLORS] = {PIN_A(0), PIN_F(0), PIN_A(1)};
@@ -47,7 +50,7 @@ void Globe::begin() {
     colorPins[i].makeOutput(1);
   // Round sensor is an input with a pull-up resistor
   sensorPin.makeOutput(0);
-  sensorPin.set(1);
+  //sensorPin.set(1);
   // Disable global interrupts
   cli();
   // Initialize the round timer (Timer1, /256, counting, compare interrupt at max to detect globe stop)
@@ -242,3 +245,5 @@ ISR(TIMER3_COMPA_vect) {
     TCNT3 = 0;
   }
 }
+
+#endif
