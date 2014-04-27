@@ -7,7 +7,8 @@ BusMaster* BusMaster::singleton = 0;
 const PIN_TYPE BusMaster::busPin = PIN_C(0);
 
 BusMaster::BusMaster() :
-  sending(0)
+  inByte(0),
+  byteIndex(0)
 {
 }
 
@@ -31,8 +32,8 @@ void BusMaster::pulse() {
 
 void BusMaster::sendSymbol(uint8_t symbol) {
   // Send the first pulse if not already in a communication
-  if (!sending) {
-    sending = 1;
+  if (!inByte) {
+    inByte = 1;
     pulse();
   }
   // Wait the right delay (-10 us to account for the processing time)
@@ -41,35 +42,39 @@ void BusMaster::sendSymbol(uint8_t symbol) {
   if (symbol != BUS_SYM_END) {
     pulse();
   } else {
-    sending = 0;
+    inByte = 0;
   }
 }
 
-void BusMaster::send(const char data[], uint16_t bitLength) {
-  if (bitLength == 0)
-    bitLength = (strlen(data) + 1) << 3;
-  // Send each bit 
-  uint8_t curBit;
-  for (uint16_t i = 0; i < bitLength; i++) {
-    // Send an end symbol after each byte
-    if (i > 0 && (i & 7) == 0)
+void BusMaster::send(const char data[], uint16_t length) {
+  if (length == 0)
+    length = strlen(data) + 1;
+  // Send each byte 
+  uint8_t curRepeat, curBit, curData, control, parity = 0;
+  for (uint16_t i = 0; i < length; i++) {
+    // Each byte is repeated to ensure it is received
+    for (curRepeat = 0; curRepeat < BUS_BYTE_REPEAT; curRepeat++) {
+      // Send data
+      for (curBit = 0; curBit < 7; curBit++) {
+        curData = (data[i] >> curBit) & 1;
+        parity^= curData;
+        sendSymbol(curData);
+      }
+      // Send control
+      control = byteIndex;
+      for (curBit = 0; curBit < BUS_BYTE_INDEX_BITS; curBit++) {
+        curData = (control >> curBit) & 1;
+        parity^= curData;
+        sendSymbol(curData);
+      }
+      // Send a parity bit
+      sendSymbol(parity);
+      // Send an end symbol
       sendSymbol(BUS_SYM_END);
-    // Send the bit
-    curBit = (data[i >> 3] >> (i & 7)) & 1;
-    sendSymbol(curBit);
-  }
-  // Send end of message
-  sendSymbol(BUS_SYM_END);
-}
-
-void BusMaster::sendString(const char data[], uint8_t redundancy) {
-  // Send the string multiple times
-  for (int i = 0; i <= redundancy; i++) {
-    send(data);
-    // If there is redundancy, send a flag indicating the end of this string
-    if (redundancy > 0) {
-      for (int i = 0; i <= 2*(redundancy+1); i++)
-        send("");
     }
+    // Take the sent byte into account
+    byteIndex++;
+    if (byteIndex >= (1 << BUS_BYTE_INDEX_BITS))
+      byteIndex = 0;
   }
 }

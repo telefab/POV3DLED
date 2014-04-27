@@ -27,7 +27,12 @@ private:
   /**
    * 1 if symbols are currently being sent
    */
-  uint8_t sending;
+  uint8_t inByte;
+
+  /**
+   * Index of the byte to be sent in the flow
+   */
+  uint8_t byteIndex;
   
   /**
    * Empty private constructor: only one bus master
@@ -61,19 +66,11 @@ public:
   /**
    * Send data through the bus (blocking).
    * @param data Data to send
-   * @param bitLength Length of the data to send in bits.
+   * @param length Length of the data to send in bytes.
    * If set to 0, data will be considered as a string and all characters
    * will be sent, including the end character.
    */
-  void send(const char data[], uint16_t bitLength = 0);
-  
-  /**
-   * Send a string
-   * With the ability to add redundancy
-   * @param data String to send
-   * @param redundancy Level of redundancy: 0 => no redundancy
-   */
-  void sendString(const char data[], uint8_t redundancy = 0);
+  void send(const char data[], uint16_t length = 0);
 };
 
 #endif

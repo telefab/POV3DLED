@@ -13,7 +13,6 @@
  * Synchronize these settings between master and slave
  */
 #define MAX_LENGTH 25
-#define REDUNDANCY 4
 
 #include <Globe.h>
 #include <BusSlave.h>
@@ -32,7 +31,7 @@ uint8_t textColor = 1;
 /**
  * Text received through the bus
  */
-char receivedText[MAX_LENGTH*(REDUNDANCY+1)];
+char receivedText[MAX_LENGTH];
 
 /**
  * Space, then letters from A to Z.
@@ -127,8 +126,8 @@ void loop() {
   globe->rotate(-1);
   delay(100);
   // Bus communication (change text and color)
-  for (uint16_t i = 0; i < MAX_LENGTH*(REDUNDANCY+2); i++) {
-    if (bus->readString(receivedText, MAX_LENGTH, REDUNDANCY)) {
+  for (uint16_t i = 0; i < MAX_LENGTH; i++) {
+    if (bus->readString(receivedText, MAX_LENGTH)) {
       if (receivedText[0] == '#' && strlen(receivedText) == 2) {
         // Change the text color
         textColor = receivedText[1] - 48;

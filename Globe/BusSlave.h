@@ -28,12 +28,6 @@ private:
   volatile char dataFifo[BUS_FIFO_SIZE];
   
   /**
-   * FIFO storing the number of valid bits
-   * in each byte
-   */
-  volatile uint8_t lengthFifo[BUS_FIFO_SIZE];
-  
-  /**
    * Pointer to the next byte to be read
    */
   uint16_t dataReadPtr;
@@ -54,6 +48,21 @@ private:
   volatile uint8_t currentBit;
   
   /**
+   * Parity computed for last received bits in this byte
+   */
+  volatile uint8_t currentParity;
+  
+  /**
+   * Current index of the byte received (read in received data)
+   */
+  volatile uint8_t currentByteIndex;
+  
+  /**
+   * Index of the last received byte
+   */
+  volatile uint8_t lastByteIndex;
+  
+  /**
    * Date at which the last pulse of the ongoing
    * conversation was received
    */
@@ -65,19 +74,9 @@ private:
   volatile uint8_t lastPulseDateSet;
   
   /**
-   * Index of the string received by readString
-   */
-  uint8_t stringIndex;
-  
-  /**
    * Index of the char in the string received by readString
    */
   uint16_t stringCharIndex;
-  
-  /**
-   * Number of string ends received
-   */
-  uint16_t stringEnds;
   
   /**
    * Empty private constructor: only one bus slave
@@ -111,15 +110,7 @@ public:
   uint16_t available();
   
   /**
-   * Read up to one byte of data
-   * @param validBits will contain the number of valid bits in the byte
-   * if this is the last byte of the message, and 0 otherwise
-   * @return data as a byte
-   */
-  char read(uint16_t &validBits);
-  
-  /**
-   * Read up to one byte of data
+   * Read one byte of data
    * @return data as a byte
    */
   char read();
@@ -128,10 +119,9 @@ public:
    * Read a string, with redundancy features
    * @param data should be a string of size maxSize * (redundancy+1), will contain received string
    * @param maxSize Maximum size of the received string
-   * @param redundancy Redundancy level (0: deactivated)
    * @return if the string is ready to use
    */
-  uint8_t readString(char data[], uint16_t maxSize, uint8_t redundancy = 0);
+  uint8_t readString(char data[], uint16_t maxSize);
   
   /**
    * Measure a pulse delay

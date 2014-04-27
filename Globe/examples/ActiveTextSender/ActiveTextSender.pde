@@ -10,7 +10,6 @@
  * Synchronize these settings between master and slave
  */
 #define MAX_LENGTH 25
-#define REDUNDANCY 4
 
 BusMaster *bus = BusMaster::get();
 char message[MAX_LENGTH];
@@ -27,7 +26,7 @@ void loop() {
     inByte = Serial.read();
     if (inByte == '\n' || messageIndex == (MAX_LENGTH-1)) {
       message[messageIndex] = '\0';
-      bus->sendString(message, REDUNDANCY);
+      bus->send(message);
       messageIndex = 0;
     } else {
       message[messageIndex] = inByte;

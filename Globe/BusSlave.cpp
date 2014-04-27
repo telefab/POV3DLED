@@ -13,11 +13,12 @@ BusSlave::BusSlave() :
   dataWritePtr(0),
   availableBytes(0),
   currentBit(0),
+  currentParity(0),
+  currentByteIndex(0),
+  lastByteIndex(0xFF),
   lastPulseDate(0),
   lastPulseDateSet(0),
-  stringIndex(0),
-  stringCharIndex(0),
-  stringEnds(0)
+  stringCharIndex(0)
 {
 }
 
@@ -52,14 +53,6 @@ uint16_t BusSlave::available() {
   return availableBytes;
 }
 
-char BusSlave::read(uint16_t& validBits) {
-  if (availableBytes == 0)
-    return 0;
-  // Get the valid bits
-  validBits = lengthFifo[dataReadPtr];
-  return read();
-}
-
 char BusSlave::read() {
   if (availableBytes == 0)
     return 0;
@@ -71,96 +64,69 @@ char BusSlave::read() {
   return result;
 }
 
-uint8_t BusSlave::readString(char data[], uint16_t maxSize, uint8_t redundancy) {
+uint8_t BusSlave::readString(char data[], uint16_t maxSize) {
   if (available() > 0) {
     char curByte = read();
-    if (curByte == 0 && stringCharIndex == 0) {
-      // Signal of an end of redundancy
-      if (stringIndex > 0) {
-
-      }
-    } else {
-      // Store the character if possible
-      if (stringCharIndex < maxSize && stringIndex <= redundancy && (curByte != 0 || stringEnds == 0)) {
-        data[stringIndex*maxSize + stringCharIndex] = curByte;
-        stringCharIndex++;
-      }
-      if (curByte == 0) {
-        // End of string character
-        if (redundancy == 0) {
-          // No redundancy, return
-          stringIndex = 0;
-          stringCharIndex = 0;
-          data[maxSize-1] = 0;
-          return 1;
-        }
-        stringEnds++;
-      } else {
-        // Normal character
-        stringEnds = 0;
-      }
-      if (stringEnds == 3)
-      {
-        // End of string
-        stringIndex++;
-        stringCharIndex = 0;
-        if (stringIndex > redundancy) {
-          // This is the end of redundancy        
-          uint8_t best = 0;
-          uint8_t bestScore = 0;
-          uint8_t score = 0;
-          // Vote for each byte
-          for (uint16_t i = 0; i < maxSize; i++) {
-            for (uint8_t j = 0; j < stringIndex; j++) {
-              for (uint8_t k = j+1; k < stringIndex; k++) {
-                if (data[i+j*maxSize] == data[i+k*maxSize])
-                  score++;
-              }
-              if (score > bestScore) {
-                bestScore = score;
-                best = j;
-              }
-            }
-            data[i] = data[i+best*maxSize];
-          }
-          // Return
-          stringIndex = 0;
-          data[maxSize-1] = 0;
-          return 1;
-        }
-      }
-      // End of a string with redundancy
+    // Store the character if possible
+    if (stringCharIndex < (maxSize-1)) {
+      data[stringCharIndex] = curByte;
+      stringCharIndex++;
+    }
+    if (curByte == 0 || stringCharIndex >= maxSize-1) {
+      data[maxSize-1] = 0;
+      stringCharIndex = 0;
+      return 1;
     }
   }
   return 0;
 }
 
 void BusSlave::saveSymbol(uint8_t symbol) {
+  // Ignore received symbols if no space to store them
+  if (availableBytes >= BUS_FIFO_SIZE)
+    return;
   if (symbol < BUS_SYM_END) {
     // Received a normal bit symbol
-    // Store the bit if there is some space
-    if (availableBytes < BUS_FIFO_SIZE) {
-      // Initialize the byte
-      if (currentBit == 0)
-        dataFifo[dataWritePtr] = 0;
-      // Ignore the bit if a bit has not been signaled finished
-      if (currentBit <= 7) {
-        dataFifo[dataWritePtr] |= (symbol << currentBit);
-        currentBit++;
-      }
+    if (currentBit == 0) {
+      // Initialize the byte data
+      dataFifo[dataWritePtr] = 0;
+      currentParity = 0;
+      currentByteIndex = 0;
+    }
+    if (currentBit <= 7) {
+      // Save a data bit
+      dataFifo[dataWritePtr] |= (symbol << currentBit);
+      currentParity^= symbol;
+      currentBit++;
+    } else if (currentBit <= 7 + BUS_BYTE_INDEX_BITS) {
+      // Save an index bit
+      currentByteIndex |= (symbol << (currentBit - 7));
+      currentParity^= symbol;
+      currentBit++;
+    } else if (currentBit == 7 + BUS_BYTE_INDEX_BITS + 1) {
+      // Parity check bit
+      currentParity^= symbol;
+      currentBit = 7 + BUS_BYTE_INDEX_BITS + 2;
+    } else {
+      // Ignore, too many bits were received
+      currentBit = 7 + BUS_BYTE_INDEX_BITS + 3;
     }
   } else {
     // Received an end of byte
-    // Ignore the byte if it is empty
-    if (currentBit > 0) {
-      // This byte is finished, and is an end byte
-      lengthFifo[dataWritePtr] = currentBit;
-      currentBit = 0;
-      availableBytes++;
-      dataWritePtr++;
-      if (dataWritePtr >= BUS_FIFO_SIZE)
-        dataWritePtr = 0;
+    // Ignore the byte if it is not the good length or the parity is wrong
+    if (currentBit == 7 + BUS_BYTE_INDEX_BITS + 2 && currentParity == 0) {
+      // Check that the byte has not already been received
+      if (currentByteIndex != lastByteIndex) {
+        // Make the byte available
+        availableBytes++;
+        dataWritePtr++;
+        if (dataWritePtr >= BUS_FIFO_SIZE)
+          dataWritePtr = 0;
+        lastByteIndex = currentByteIndex;
+      }
     }
+    // Get ready for the next byte
+    currentBit = 0;
   }
 }
 
