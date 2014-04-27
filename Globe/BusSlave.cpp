@@ -2,6 +2,8 @@
 
 #include "BusSlave.h"
 #include <avr/interrupt.h>
+#include <EEPROM.h>
+#include <Debug.h>
 
 BusSlave* BusSlave::singleton = 0;
 
@@ -100,7 +102,7 @@ void BusSlave::saveSymbol(uint8_t symbol) {
       currentBit++;
     } else if (currentBit <= 7 + BUS_BYTE_INDEX_BITS) {
       // Save an index bit
-      currentByteIndex |= (symbol << (currentBit - 7));
+      currentByteIndex |= (symbol << (currentBit - 8));
       currentParity^= symbol;
       currentBit++;
     } else if (currentBit == 7 + BUS_BYTE_INDEX_BITS + 1) {
@@ -114,7 +116,7 @@ void BusSlave::saveSymbol(uint8_t symbol) {
   } else {
     // Received an end of byte
     // Ignore the byte if it is not the good length or the parity is wrong
-    if (currentBit == 7 + BUS_BYTE_INDEX_BITS + 2 && currentParity == 0) {
+    if ((currentBit == (7 + BUS_BYTE_INDEX_BITS + 2)) && currentParity == 0) {
       // Check that the byte has not already been received
       if (currentByteIndex != lastByteIndex) {
         // Make the byte available

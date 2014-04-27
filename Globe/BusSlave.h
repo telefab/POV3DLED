@@ -25,7 +25,7 @@ private:
   /**
    * FIFO storing received data
    */
-  volatile char dataFifo[BUS_FIFO_SIZE];
+  volatile uint8_t dataFifo[BUS_FIFO_SIZE];
   
   /**
    * Pointer to the next byte to be read

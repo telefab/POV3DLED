@@ -50,12 +50,13 @@ void BusMaster::send(const char data[], uint16_t length) {
   if (length == 0)
     length = strlen(data) + 1;
   // Send each byte 
-  uint8_t curRepeat, curBit, curData, control, parity = 0;
+  uint8_t curRepeat, curBit, curData, control, parity;
   for (uint16_t i = 0; i < length; i++) {
     // Each byte is repeated to ensure it is received
     for (curRepeat = 0; curRepeat < BUS_BYTE_REPEAT; curRepeat++) {
+      parity = 0;
       // Send data
-      for (curBit = 0; curBit < 7; curBit++) {
+      for (curBit = 0; curBit < 8; curBit++) {
         curData = (data[i] >> curBit) & 1;
         parity^= curData;
         sendSymbol(curData);
