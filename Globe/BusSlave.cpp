@@ -2,8 +2,6 @@
 
 #include "BusSlave.h"
 #include <avr/interrupt.h>
-#include <EEPROM.h>
-#include <Debug.h>
 
 BusSlave* BusSlave::singleton = 0;
 

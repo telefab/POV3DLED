@@ -2,7 +2,6 @@
 
 #include "Globe.h"
 #include <avr/interrupt.h>
-#include <Arduino.h>
 
 #define START_TIMER3 TCCR3B |= (1 << WGM12) | (1 << CS10)
 #define STOP_TIMER3 TCCR3B &= ~((1 << WGM12) | (1 << CS10))
