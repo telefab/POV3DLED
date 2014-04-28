@@ -85,61 +85,61 @@ void setup() {
 }
 
 void loop() {
-  // Always keep the last columns clear to separate start and end of text
-  for (i = 0; i < CHAR_HEIGHT; i++) {
-    globe->setLedRot(0, i+heightOffset, 0);
-  }
-  // If the text is not fully displayed
-  if (endFrom == 0) {
-    if (currentCol == 0) {
-      // Select the index of the character in the letter array
-      currentIndex = text[currentPos];
-      if (currentIndex >= 65 && currentIndex <= 90)
-        currentIndex-= 64;
-      else if (currentIndex >= 97 && currentIndex <= 122)
-        currentIndex-= 96;
-      else
-        currentIndex = 0;
-    }
-    // Display one column of text
+  // Update the display, only once per globe round
+  if (globe->passedRound()) {
+    // Always keep the last columns clear to separate start and end of text
     for (i = 0; i < CHAR_HEIGHT; i++) {
-      globe->setLedRot(globeWidth-CHAR_FULL_WIDTH, i+heightOffset, ((letters[currentIndex][i] >> (CHAR_FULL_WIDTH-currentCol)) & 1) * textColor);
+      globe->setLedRot(0, i+heightOffset, 0);
     }
-    // Get ready for next column
-    currentCol++;
-    if (currentCol > CHAR_WIDTH) {
-      currentCol = 0;
-      currentPos++;
-      if (currentPos > (textLength-1)) {
-        currentPos = 0;
-        endFrom = 1;
+    // If the text is not fully displayed
+    if (endFrom == 0) {
+      if (currentCol == 0) {
+        // Select the index of the character in the letter array
+        currentIndex = text[currentPos];
+        if (currentIndex >= 65 && currentIndex <= 90)
+          currentIndex-= 64;
+        else if (currentIndex >= 97 && currentIndex <= 122)
+          currentIndex-= 96;
+        else
+          currentIndex = 0;
       }
-    }
-  } else {
-    // Wait until the text has made a full round before displaying again
-    if (endFrom >= globeWidth - CHAR_FULL_WIDTH)
-      endFrom = 0;
-    else
-      endFrom++;
-  }
-  // Rotate
-  globe->rotate(-1);
-  delay(100);
-  // Bus communication (change text and color)
-  for (uint16_t i = 0; i < MAX_LENGTH; i++) {
-    if (bus->readString(receivedText, MAX_LENGTH)) {
-      if (receivedText[0] == '#' && strlen(receivedText) == 2) {
-        // Change the text color
-        textColor = receivedText[1] - 48;
-      } else {
-        // Change the text itself
-        strcpy(text, receivedText);
-        textLength = strlen(text);
-        currentPos = 0;
+      // Display one column of text
+      for (i = 0; i < CHAR_HEIGHT; i++) {
+        globe->setLedRot(globeWidth-CHAR_FULL_WIDTH, i+heightOffset, ((letters[currentIndex][i] >> (CHAR_FULL_WIDTH-currentCol)) & 1) * textColor);
+      }
+      // Get ready for next column
+      currentCol++;
+      if (currentCol > CHAR_WIDTH) {
         currentCol = 0;
-        endFrom = 0;
-        globe->rotate(-5);
+        currentPos++;
+        if (currentPos > (textLength-1)) {
+          currentPos = 0;
+          endFrom = 1;
+        }
       }
+    } else {
+      // Wait until the text has made a full round before displaying again
+      if (endFrom >= globeWidth - CHAR_FULL_WIDTH)
+        endFrom = 0;
+      else
+        endFrom++;
+    }
+    // Rotate
+    globe->rotate(-1);
+  }
+  // Listen to the bus
+  if (bus->readString(receivedText, MAX_LENGTH)) {
+    if (receivedText[0] == '#' && strlen(receivedText) == 2) {
+      // Change the text color
+      textColor = receivedText[1] - 48;
+    } else {
+      // Change the text itself
+      strcpy(text, receivedText);
+      textLength = strlen(text);
+      currentPos = 0;
+      currentCol = 0;
+      endFrom = 0;
+      globe->rotate(-5);
     }
   }
 }

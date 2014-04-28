@@ -200,6 +200,15 @@ void Globe::delayRound(uint16_t rounds) {
   while (remRounds > 0) {}
 }
 
+uint8_t Globe::passedRound(uint16_t rounds) {
+  if (remRounds == 0) {
+    // Start again once rounds have passed
+    remRounds = rounds;
+    return 1;
+  }
+  return 0;
+}
+
 /**
  * Called at each round by
  * the round sensor to synchronize the display

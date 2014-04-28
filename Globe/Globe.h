@@ -204,8 +204,17 @@ public:
   /**
    * Blocks during a certain number of rounds.
    * One by default.
+   * delayRound and passedRount can be in use only once at a given time.
    */
   void delayRound(uint16_t rounds = 1);
+
+  /**
+   * Return if a certain number of rounds have passed since the first call.
+   * Return 1 at first call.
+   * The number of rounds is one by default.
+   * delayRound and passedRount can be in use only once at a given time.
+   */
+  uint8_t passedRound(uint16_t rounds = 1);
 
 };
 
