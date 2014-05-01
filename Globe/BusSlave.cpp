@@ -15,7 +15,7 @@ BusSlave::BusSlave() :
   currentBit(0),
   currentParity(0),
   currentByteIndex(0),
-  lastByteIndex(0xFF),
+  lastByteIndex((1 << BUS_BYTE_INDEX_BITS) - 1),
   lastPulseDate(0),
   lastPulseDateSet(0),
   stringCharIndex(0)
@@ -39,7 +39,7 @@ void BusSlave::begin() {
   TCCR4A = 0;
   TCCR4B = 0;
   TIMSK4 = 0;
-  TCCR4B |= (1<<ICES4) | (1 << CS41);
+  TCCR4B |= (1 << ICES4) | (1 << CS41);
   TIMSK4 |= (1 << OCIE4A);
   OCR4A = 0xFFFF;
   // Activate bus interrupts (INT5, rising)

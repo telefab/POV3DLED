@@ -6,12 +6,12 @@
 /**
  * Duration of a pulse
  */
-#define BUS_PULSE 20
+#define BUS_PULSE 10
 
 /**
  * Basic duration of a symbol, multiplied for each different symbol
  */
-#define BUS_SYMBOL_BASE 200
+#define BUS_SYMBOL_BASE 100
 
 /**
  * Number of times a byte should be repeated

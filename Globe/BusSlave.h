@@ -116,8 +116,8 @@ public:
   char read();
   
   /**
-   * Read a string, with redundancy features
-   * @param data should be a string of size maxSize * (redundancy+1), will contain received string
+   * Read a string
+   * @param data should be a string of size maxSize, will contain received string
    * @param maxSize Maximum size of the received string
    * @return if the string is ready to use
    */
