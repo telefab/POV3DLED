@@ -13,6 +13,8 @@
 #define SNAKE_HEAD_COLOR(zone) ((zone) == 1 ? 5 : 6)
 #define TARGET_COLOR 2
 
+// Size when the game starts
+#define INIT_SIZE 3
 // Size increase at each found target
 #define GROWTH_RATE 3
 
@@ -65,10 +67,10 @@ void nextPos(uint8_t &nextX, uint8_t &nextY, uint8_t &nextDir, const uint8_t& x,
       if (nextY == 0) {
         // Crossing the top
         nextDir = DOWN;
-        if (nextX < headZone)
-          nextX+= headZone;
+        if (nextX < globeZone)
+          nextX+= globeZone;
         else
-          nextX-= headZone;
+          nextX-= globeZone;
       } else {
         nextY--;
       }
@@ -77,10 +79,10 @@ void nextPos(uint8_t &nextX, uint8_t &nextY, uint8_t &nextDir, const uint8_t& x,
       if (nextY == globeHeight-1) {
         // Crossing the bottom
         nextDir = UP;
-        if (nextX < headZone)
-          nextX+= headZone;
+        if (nextX < globeZone)
+          nextX+= globeZone;
         else
-          nextX-= headZone;
+          nextX-= globeZone;
       } else {
         nextY++;
       }
@@ -135,7 +137,7 @@ void initGame() {
   headDir = LEFT;
   tailX = headX;
   tailY = headY;
-  size = 1;
+  size = INIT_SIZE;
   visibleSize = 1;
   // Target will start in zone 2
   targetZone = 1;
@@ -155,7 +157,7 @@ void snakeStep() {
     // Reached a target, grow
     size+= GROWTH_RATE;
     createTarget();
-  } else if (tmpColor == SNAKE_COLOR && (visibleSize < size || tmpX != tailX || tmpX != tailY)) {
+  } else if (tmpColor == SNAKE_COLOR && (visibleSize < size || tmpX != tailX || tmpY != tailY)) {
     // The snake did byte itself (tail ignored if the snake is not getting bigger)
     initGame();
     return;

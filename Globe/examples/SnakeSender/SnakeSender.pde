@@ -59,6 +59,7 @@ uint8_t analyzeSensor(const uint8_t& sensor) {
 void checkDir(uint8_t player) {
   // Read the UP/DOWN sensor
   tmpOrder = analyzeSensor(sensors[player][0]);
+  tmpDir = NO_MOVE;
   if (tmpOrder == 2)
     tmpDir = UP;
   else if (tmpOrder == 1)
@@ -73,7 +74,7 @@ void checkDir(uint8_t player) {
     // New direction
     tmpData = tmpDir;
     // Include the player number in sent data
-    tmpData&= (player + 1) << 2;
+    tmpData|= (player + 1) << 2;
     // Send
     bus->send((char*) &tmpData, 1);
   }
