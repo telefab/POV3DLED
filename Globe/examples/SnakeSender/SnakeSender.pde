@@ -2,6 +2,8 @@
  * Snake controller.
  * Works with two joysticks.
  * Simply send orders through the bus.
+ * Configuration: put a jumper between pins 2 and 3 for one player mode.
+ * Default: 2 players mode.
  */
 
 #include <Pin.h>
@@ -31,6 +33,11 @@ const uint8_t sensors[2][2] = {
  * Current direction
  */
 uint8_t dir[] = {NO_MOVE, NO_MOVE};
+
+/**
+ * Game configuration
+ */
+uint8_t twoPlayersMode;
 
 /**
  * Temporary values
@@ -73,8 +80,9 @@ void checkDir(uint8_t player) {
   if (tmpDir != NO_MOVE && tmpDir != dir[player]) {
     // New direction
     tmpData = tmpDir;
-    // Include the player number in sent data
-    tmpData|= (player + 1) << 2;
+    // Include the player number in sent data if two players
+    if (twoPlayersMode)
+      tmpData|= (player + 1) << 2;
     // Send
     bus->send((char*) &tmpData, 1);
   }
@@ -82,7 +90,21 @@ void checkDir(uint8_t player) {
   dir[player] = tmpDir;
 }
 
+/**
+ * Set the number of players
+ */
+void setPlayersMode() {
+  twoPlayersMode = digitalRead(2);
+}
+
 void setup() {
+  // Setup for the one/two players setting
+  pinMode(2, INPUT_PULLUP);
+  pinMode(3, OUTPUT);
+  digitalWrite(3, LOW);
+  setPlayersMode();
+  attachInterrupt(0, setPlayersMode, CHANGE);
+  // Bus setup
   bus->begin();
 }
 

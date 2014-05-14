@@ -18,6 +18,9 @@
 // Size increase at each found target
 #define GROWTH_RATE 3
 
+// Number of LEDs up and down where targets cannot be
+#define TARGET_MARGIN 7
+
 // Possible directions
 #define UP 0
 #define DOWN 1
@@ -29,13 +32,14 @@ BusSlave *bus = BusSlave::get();
 
 const uint8_t globeWidth = globe->getWidth();
 const uint8_t globeHeight = globe->getHeight();
-const uint8_t globeZone = globeHeight/2;
+const uint8_t globeZone = globeWidth/2;
 
 // Snake head location and direction
 uint8_t headX;
 uint8_t headY;
 uint8_t headZone;
 uint8_t headDir;
+uint8_t headLastDir;
 // Snake tail location
 uint8_t tailX;
 uint8_t tailY;
@@ -49,8 +53,7 @@ uint8_t receivedOrder;
 uint8_t receivedDir;
 uint8_t receivedZone;
 // Temporary variables
-uint8_t tmpX;
-uint8_t tmpY;
+uint8_t tmpX, tmpY, headNextX, headNextY;
 uint8_t tmpDir;
 uint8_t tmpColor;
 
@@ -111,7 +114,7 @@ void nextPos(uint8_t &nextX, uint8_t &nextY, uint8_t &nextDir, const uint8_t& x,
 void createTarget() {
   targetZone = targetZone == 1 ? 2 : 1;
   do {
-    tmpY = random(globeHeight);
+    tmpY = random(TARGET_MARGIN, globeHeight-TARGET_MARGIN);
     // Create the target in the right zone
     if (targetZone == 1)
       tmpX = random(globeZone);
@@ -135,6 +138,7 @@ void initGame() {
   headY = globeHeight/2;
   headZone = 1;
   headDir = LEFT;
+  headLastDir = LEFT;
   tailX = headX;
   tailY = headY;
   size = INIT_SIZE;
@@ -151,14 +155,14 @@ void initGame() {
  */
 void snakeStep() {
   // Future position of the head
-  nextPos(tmpX, tmpY, tmpDir, headX, headY, headDir);
-  tmpColor = globe->getLed(tmpX, tmpY) & 0x07;
+  nextPos(headNextX, headNextY, tmpDir, headX, headY, headDir);
+  tmpColor = globe->getLed(headNextX, headNextY) & 0x07;
   if (tmpColor == TARGET_COLOR) {
     // Reached a target, grow
     size+= GROWTH_RATE;
     createTarget();
-  } else if (tmpColor == SNAKE_COLOR && (visibleSize < size || tmpX != tailX || tmpY != tailY)) {
-    // The snake did byte itself (tail ignored if the snake is not getting bigger)
+  } else if (tmpColor == SNAKE_COLOR && (visibleSize < size || headNextX != tailX || headNextY != tailY)) {
+    // The snake did bite itself (tail ignored if the snake is not getting bigger)
     initGame();
     return;
   }
@@ -167,8 +171,9 @@ void snakeStep() {
   // Include the direction in unused bits to be able to locate the next snake part
   globe->setLed(headX, headY, SNAKE_COLOR | (headDir << 3));
   // Set the new head
-  headX = tmpX;
-  headY = tmpY;
+  headX = headNextX;
+  headY = headNextY;
+  headLastDir = headDir;
   headDir = tmpDir;
   headZone = headX < globeZone ? 1 : 2;
   globe->setLed(headX, headY, SNAKE_HEAD_COLOR(headZone));
@@ -194,8 +199,14 @@ void processOrder() {
   // Check the zone (player 1 or 2) from which the order is coming
   // Zone 0 is for one player mode
   if (receivedZone == 0 || receivedZone == headZone) {
-    // Change the current direction
-    headDir = receivedDir;
+    // Check that this is not an U-turn
+    if (!((receivedDir == UP && headLastDir == DOWN) ||
+      (receivedDir == DOWN && headLastDir == UP) ||
+      (receivedDir == LEFT && headLastDir == RIGHT) ||
+      (receivedDir == RIGHT && headLastDir == LEFT))) {
+      // Change the current direction
+      headDir = receivedDir;
+    }
   }
 }
 
