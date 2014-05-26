@@ -62,9 +62,9 @@ void Globe::begin() {
   TCCR3A = 0;
   TCCR3B = 0;
   TIMSK3 |= (1 << OCIE1A);
-  // Activate round sensor interrupts (INT4, falling)
+  // Activate round sensor interrupts (INT4, rising)
   EIMSK |= (1 << INT4);
-  EICRB |= (1 << ISC41); 
+  EICRB |= (1 << ISC41) | (1 << ISC40); 
   // enable global interrupts
   sei();
 }
