@@ -248,22 +248,23 @@ module conductor() {
 color("Green")
 	base();
 // Rotating part
-//color("Red")
-//	cyl();
+color("Red")
+	cyl();
 // Conductor spacer
-//color("Yellow")
-//	conductor_spacer();
-// Conductor block
-//color("Yellow")
-//	translate([30, 30, 0])
-//		conductor_block();
+color("Yellow")
+	conductor_spacer();
+// Conductor block (print 3)
+color("Yellow")
+	translate([(conductor_block_width - 0.1)/2, cyl_in_diam/2 + 0.1, conductor_offset + 2*conductor_height + conductor_space])
+		rotate([0, 0, 90])
+			conductor_block();
 // Fixed connector
-//color("Orange")
-//	connector();
-// Conductors simulated
-//color("Blue") {
-//	translate([0,0,conductor_offset])
-//		conductor();
-//	translate([0,0,conductor_offset+conductor_height+conductor_space])
-//		conductor();
-//}
+color("Orange")
+	connector();
+// Conductors simulated (do not print)
+color("Blue") {
+	translate([0,0,conductor_offset])
+		conductor();
+	translate([0,0,conductor_offset+conductor_height+conductor_space])
+		conductor();
+}
