@@ -5,7 +5,7 @@ POV3DLED - Rotating LED globe
 Examples are also provided. Code is also provided to manage a communication
 between the globe and an external Arduino, by modulating the ground wire that
 powers the globe logic.
-
+Rrr
 * The "Things" directory contains 3D models of parts of the globe.
 
 * The "ImageConverter" directory contains a Java program to convert
